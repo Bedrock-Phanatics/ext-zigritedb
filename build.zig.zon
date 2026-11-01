@@ -13,5 +13,5 @@
             .hash = "zigritedb-1.2.0-r-G0MGCNBQBWU_6GTm0OFI0t3x_qauxZ9U04wqcK5MMm",
         },
     },
-    .paths = .{ "build.zig", "build.zig.zon", "zigritedb.stub.php", "zigritedb_arginfo.h", "zigritedb.h", "src", "tests", "README.md" },
+    .paths = .{ "build.zig", "build.zig.zon", "LICENSE", "zigritedb.stub.php", "zigritedb_arginfo.h", "zigritedb.h", "src", "tests", "README.md" },
 }

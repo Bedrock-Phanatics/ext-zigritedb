@@ -38,3 +38,7 @@ zig build phpt -Dphp-include-dir=... -Dphp=$(which php)
 ```
 
 Regenerate `zigritedb_arginfo.h` with phpz's `tools/php/gen_stub.php zigritedb.stub.php` after editing the stub.
+
+## License
+
+Apache License 2.0, like ZigriteDB. See [LICENSE](LICENSE).
