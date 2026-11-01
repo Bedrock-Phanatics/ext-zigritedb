@@ -9,7 +9,7 @@
             .hash = "phpz-0.0.0-D3BhOA2wFQDjzXMVqZDonjuSSt89tqNJiLJKz2UIugAr",
         },
         .zigritedb = .{
-            .url = "git+https://github.com/TrixNEW/ZigriteDB#cbd4731f02237f635f0d1780d732296af336a5a6",
+            .url = "git+https://github.com/TrixNEW/ZigriteDB#4fd5880b6936a52e832db125d937e101ba81c5ef",
             .hash = "zigritedb-1.2.0-r-G0MGCNBQBWU_6GTm0OFI0t3x_qauxZ9U04wqcK5MMm",
         },
     },
