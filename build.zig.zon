@@ -1,6 +1,6 @@
 .{
     .name = .ext_zigritedb,
-    .version = "0.2.0",
+    .version = "0.2.1",
     .fingerprint = 0x6968de09413cda4,
     .minimum_zig_version = "0.17.0",
     .dependencies = .{
@@ -9,8 +9,8 @@
             .hash = "phpz-0.0.0-D3BhOA2wFQDjzXMVqZDonjuSSt89tqNJiLJKz2UIugAr",
         },
         .zigritedb = .{
-            .url = "git+https://github.com/TrixNEW/ZigriteDB#4fd5880b6936a52e832db125d937e101ba81c5ef",
-            .hash = "zigritedb-1.2.0-r-G0MGCNBQBWU_6GTm0OFI0t3x_qauxZ9U04wqcK5MMm",
+            .url = "git+https://github.com/TrixNEW/ZigriteDB#f0c6423c951f19b0b62f409c278194f252cce902",
+            .hash = "zigritedb-1.2.0-r-G0MAafBQA5ocvnXz2e10QruqNn2SkluBsNDeGPxQjr",
         },
     },
     .paths = .{ "build.zig", "build.zig.zon", "LICENSE", "zigritedb.stub.php", "zigritedb_arginfo.h", "zigritedb.h", "src", "tests", "README.md" },
