@@ -19,7 +19,7 @@ comptime {
 
 fn startup() !void {
     if (native.zg_abi_version() != native.abi_version) {
-        return phpz.exception.throwError(null, "libzigritedb_native speaks ABI %u, but zigritedb was built for ABI 3", .{native.zg_abi_version()});
+        return phpz.exception.throwError(null, "ZigriteDB speaks ABI %u, but zigritedb was written for ABI 3", .{native.zg_abi_version()});
     }
     keepSigioHandled();
 }

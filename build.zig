@@ -20,9 +20,6 @@ pub fn build(b: *std.Build) void {
     const windows_debug = b.option(bool, "windows-debug", "Windows only: build against a debug PHP SDK") orelse false;
     const libc_file = b.option([]const u8, "libc-file", "Libc paths file for C translation and extension compilation");
     const php = b.option([]const u8, "php", "PHP binary used for PHPT tests") orelse "php";
-    // ZigriteDB builds with its own Zig version, so it's linked through its frozen C ABI rather than as a Zig module
-    const zigritedb_prefix = b.option([]const u8, "zigritedb-prefix", "Install prefix of ZigriteDB's libzigritedb_native") orelse
-        b.graph.environ_map.get("ZIGRITEDB_PREFIX") orelse ".deps/zigritedb";
 
     const phpz_dep = b.dependency("phpz", .{});
     const phpz = Phpz.init(phpz_dep, .{
@@ -51,11 +48,24 @@ pub fn build(b: *std.Build) void {
     extension_info.addOption([:0]const u8, "version", package.version);
     extension.root_module.addOptions("extension_info", extension_info);
 
-    const library_dir = b.pathJoin(&.{ zigritedb_prefix, if (target.result.os.tag == .windows) "bin" else "lib" });
-    extension.root_module.addLibraryPath(.{ .cwd_relative = library_dir });
-    extension.root_module.linkSystemLibrary("zigritedb_native", .{});
-    if (target.result.os.tag != .windows) extension.root_module.addRPathSpecial("$ORIGIN");
-    if (libc_file) |file| extension.setLibCFile(.{ .cwd_relative = file });
+    // ZigriteDB is linked in through its C ABI, built as its own root so its std options stay its own
+    const zigritedb_dep = b.dependency("zigritedb", .{ .target = target, .optimize = optimize });
+    const zigritedb = b.addLibrary(.{
+        .name = "zigritedb_native",
+        .linkage = .static,
+        .root_module = b.createModule(.{
+            .root_source_file = zigritedb_dep.path("src/c_api.zig"),
+            .target = target,
+            .optimize = optimize,
+            .link_libc = true,
+            .pic = true,
+        }),
+    });
+    extension.root_module.linkLibrary(zigritedb);
+    if (libc_file) |file| {
+        extension.setLibCFile(.{ .cwd_relative = file });
+        zigritedb.setLibCFile(.{ .cwd_relative = file });
+    }
 
     const filename = if (target.result.os.tag == .windows) "php_" ++ extension_name ++ ".dll" else extension_name ++ ".so";
     const install = b.addInstallFileWithDir(extension.getEmittedBin(), .{ .custom = "modules" }, filename);
@@ -68,9 +78,5 @@ pub fn build(b: *std.Build) void {
     phpt.addArg("tests/phpt");
     phpt.setCwd(b.path("."));
     phpt.has_side_effects = true;
-    const path_variable = if (target.result.os.tag == .windows) "PATH" else "LD_LIBRARY_PATH";
-    const separator = if (target.result.os.tag == .windows) ";" else ":";
-    const current = b.graph.environ_map.get(path_variable);
-    phpt.setEnvironmentVariable(path_variable, if (current) |value| b.fmt("{s}{s}{s}", .{ library_dir, separator, value }) else library_dir);
     b.step("phpt", "Run PHPT tests against the built extension").dependOn(&phpt.step);
 }

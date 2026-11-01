@@ -30,16 +30,11 @@ Errors throw `Zigrite\Exception` with ZigriteDB's status as the code, and invali
 
 ## Building
 
-ZigriteDB builds with its own Zig version, so the extension links its C ABI 3 library rather than its Zig source.
+ZigriteDB is a pinned dependency, linked into the extension through its C ABI 3, so Zig 0.17 builds everything.
 
 ```sh
-# in ZigriteDB, with its Zig version
-zig build -Doptimize=ReleaseSafe --prefix /opt/zigritedb
-
-# here, with Zig 0.17
-zig build -Doptimize=ReleaseSafe -Dzigritedb-prefix=/opt/zigritedb -Dphp-include-dir=$(php-config --include-dir)
-zig build phpt -Dzigritedb-prefix=/opt/zigritedb -Dphp-include-dir=... -Dphp=$(which php)
+zig build -Doptimize=ReleaseSafe -Dphp-include-dir=$(php-config --include-dir)
+zig build phpt -Dphp-include-dir=... -Dphp=$(which php)
 ```
 
-`zig-out/modules/zigritedb.so` looks for `libzigritedb_native.so.3` in its own directory first, so install the two side
-by side. Regenerate `zigritedb_arginfo.h` with phpz's `tools/php/gen_stub.php zigritedb.stub.php` after editing the stub.
+Regenerate `zigritedb_arginfo.h` with phpz's `tools/php/gen_stub.php zigritedb.stub.php` after editing the stub.

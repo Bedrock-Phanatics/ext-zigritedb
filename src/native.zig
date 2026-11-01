@@ -1,4 +1,4 @@
-//! Declarations for ZigriteDB's C ABI 3 (`zigritedb.h`), linked from libzigritedb_native.
+//! Declarations for ZigriteDB's C ABI 3 (`zigritedb.h`), which is linked in statically.
 const std = @import("std");
 
 pub const abi_version: u32 = 3;
