@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: cf787018ca3cee0f5778b7b27bbbdf5cf57e1afc */
+ * Stub hash: c35cd753058144270a00d7eaa08f863935d279df */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_class_Zigrite_World___construct, 0, 0, 1)
 	ZEND_ARG_TYPE_INFO(0, path, IS_STRING, 0)
@@ -7,6 +7,30 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_class_Zigrite_World___construct, 0, 0, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Zigrite_World_isSupported, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Zigrite_World_importBedrock, 0, 2, IS_ARRAY, 0)
+	ZEND_ARG_TYPE_INFO(0, bedrockWorld, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(0, destination, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Zigrite_World_exportBedrock, 0, 2, IS_ARRAY, 0)
+	ZEND_ARG_TYPE_INFO(0, world, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(0, destination, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Zigrite_World_verifyBedrock, 0, 2, IS_ARRAY, 0)
+	ZEND_ARG_TYPE_INFO(0, world, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(0, bedrockWorld, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Zigrite_World_verify, 0, 1, IS_ARRAY, 0)
+	ZEND_ARG_TYPE_INFO(0, world, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Zigrite_World_migrate, 0, 2, IS_ARRAY, 0)
+	ZEND_ARG_TYPE_INFO(0, source, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(0, destination, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Zigrite_World_getChunk, 0, 3, IS_ARRAY, 1)
@@ -49,6 +73,11 @@ ZEND_END_ARG_INFO()
 
 ZEND_METHOD(Zigrite_World, __construct);
 ZEND_METHOD(Zigrite_World, isSupported);
+ZEND_METHOD(Zigrite_World, importBedrock);
+ZEND_METHOD(Zigrite_World, exportBedrock);
+ZEND_METHOD(Zigrite_World, verifyBedrock);
+ZEND_METHOD(Zigrite_World, verify);
+ZEND_METHOD(Zigrite_World, migrate);
 ZEND_METHOD(Zigrite_World, getChunk);
 ZEND_METHOD(Zigrite_World, writeChunk);
 ZEND_METHOD(Zigrite_World, auxGet);
@@ -62,6 +91,11 @@ ZEND_METHOD(Zigrite_World, getStatistics);
 static const zend_function_entry class_Zigrite_World_methods[] = {
 	ZEND_ME(Zigrite_World, __construct, arginfo_class_Zigrite_World___construct, ZEND_ACC_PUBLIC)
 	ZEND_ME(Zigrite_World, isSupported, arginfo_class_Zigrite_World_isSupported, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	ZEND_ME(Zigrite_World, importBedrock, arginfo_class_Zigrite_World_importBedrock, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	ZEND_ME(Zigrite_World, exportBedrock, arginfo_class_Zigrite_World_exportBedrock, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	ZEND_ME(Zigrite_World, verifyBedrock, arginfo_class_Zigrite_World_verifyBedrock, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	ZEND_ME(Zigrite_World, verify, arginfo_class_Zigrite_World_verify, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	ZEND_ME(Zigrite_World, migrate, arginfo_class_Zigrite_World_migrate, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	ZEND_ME(Zigrite_World, getChunk, arginfo_class_Zigrite_World_getChunk, ZEND_ACC_PUBLIC)
 	ZEND_ME(Zigrite_World, writeChunk, arginfo_class_Zigrite_World_writeChunk, ZEND_ACC_PUBLIC)
 	ZEND_ME(Zigrite_World, auxGet, arginfo_class_Zigrite_World_auxGet, ZEND_ACC_PUBLIC)

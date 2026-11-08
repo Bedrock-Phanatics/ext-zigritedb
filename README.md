@@ -25,6 +25,18 @@ records last. Writes are buffered by default: they reach the OS before the call 
 crashing, and `flush()` or `close()` makes them survive power loss too. A world freed without `close()` is closed by its
 destructor.
 
+Worlds convert with ZigriteDB's native converter, which keeps every LevelDB record and world file as is and compares
+the result with the source before it appears at the destination. Each call blocks until done, so run it off the main
+thread, and returns record and file counts:
+
+```php
+Zigrite\World::importBedrock("/worlds/leveldb", "/worlds/new");   // Bedrock LevelDB world -> ZigriteDB
+Zigrite\World::exportBedrock("/worlds/new", "/worlds/back");      // ZigriteDB -> Bedrock LevelDB world
+Zigrite\World::verifyBedrock("/worlds/new", "/worlds/leveldb");  // same records and files, or code 17
+Zigrite\World::verify("/worlds/new");                             // every checksum, or code 6
+Zigrite\World::migrate("/worlds/old-format", "/worlds/current");  // older ZigriteDB disk format
+```
+
 Errors throw `Zigrite\Exception` with ZigriteDB's status as the code, and invalid arguments throw `ValueError` or
 `TypeError`. `Zigrite\World::isSupported()` is false where ZigriteDB can't store worlds (anything but Linux for now).
 

@@ -24,7 +24,7 @@ const initial_buffer = 256 * 1024;
 const initial_records = 64;
 
 fn fail(status: native.Status, comptime what: [:0]const u8) exception.Error {
-    const code: c_int = @intFromEnum(status);
+    const code: c_int = @backingInt(status);
     return exception.throwExceptionEx(root.ExceptionClass.entry, code, what ++ ": %s", .{native.zg_status_message(code)});
 }
 
@@ -37,7 +37,7 @@ const World = struct {
     fn deinit(self: *World) void {
         if (self.handle) |handle| {
             const status = native.zg_close(handle);
-            if (status != .ok) c.php_error_docref(null, c.E_WARNING, "Zigrite\\World was not closed cleanly: %s", native.zg_status_message(@intFromEnum(status)));
+            if (status != .ok) c.php_error_docref(null, c.E_WARNING, "Zigrite\\World was not closed cleanly: %s", native.zg_status_message(@backingInt(status)));
         }
         self.handle = null;
         self.release();
@@ -55,7 +55,7 @@ const World = struct {
     }
 
     pub fn __construct(path: []const u8, options: ?*Array) !World {
-        if (path.len == 0 or path.len > 4096 or std.mem.indexOfScalar(u8, path, 0) != null) return exception.argumentValueError(1, "must be a directory path of at most 4096 bytes", .{});
+        try checkPath(path, 1);
         var config: native.Options = undefined;
         if (native.zg_options_init(&config) != .ok) return exception.throwException(root.ExceptionClass.entry, "libzigritedb_native does not speak ABI 3", 0);
         if (options) |table| try parseOptions(table, &config);
@@ -68,6 +68,30 @@ const World = struct {
 
     pub fn isSupported() bool {
         return native.zg_platform_supported() != 0;
+    }
+
+    pub fn importBedrock(bedrock_world: []const u8, destination: []const u8) !*Array {
+        return convert(native.zg_import, bedrock_world, destination, "cannot import world");
+    }
+
+    pub fn exportBedrock(world: []const u8, destination: []const u8) !*Array {
+        return convert(native.zg_export, world, destination, "cannot export world");
+    }
+
+    pub fn verifyBedrock(world: []const u8, bedrock_world: []const u8) !*Array {
+        return convert(native.zg_verify_bedrock, world, bedrock_world, "worlds do not match");
+    }
+
+    pub fn migrate(source: []const u8, destination: []const u8) !*Array {
+        return convert(native.zg_migrate, source, destination, "cannot migrate world");
+    }
+
+    pub fn verify(world: []const u8) !*Array {
+        try checkPath(world, 1);
+        var report: native.Report = undefined;
+        const status = native.zg_verify(world.ptr, world.len, &report);
+        if (status != .ok) return failReport(status, "world is damaged", &report);
+        return reportArray(&report);
     }
 
     /// Returns every record of the chunk keyed by its LevelDB suffix, or null when the chunk has none.
@@ -98,12 +122,12 @@ const World = struct {
 
     fn grow(self: *World, bytes: usize, records: usize) !void {
         if (bytes > self.buffer.len) {
-            const fresh = gpa.alloc(u8, bytes) catch return exception.throwException(root.ExceptionClass.entry, "out of memory", @intFromEnum(native.Status.out_of_memory));
+            const fresh = gpa.alloc(u8, bytes) catch return exception.throwException(root.ExceptionClass.entry, "out of memory", @backingInt(native.Status.out_of_memory));
             gpa.free(self.buffer);
             self.buffer = fresh;
         }
         if (records > self.records.len) {
-            const fresh = gpa.alloc(native.ChunkRecord, records) catch return exception.throwException(root.ExceptionClass.entry, "out of memory", @intFromEnum(native.Status.out_of_memory));
+            const fresh = gpa.alloc(native.ChunkRecord, records) catch return exception.throwException(root.ExceptionClass.entry, "out of memory", @backingInt(native.Status.out_of_memory));
             gpa.free(self.records);
             self.records = fresh;
         }
@@ -304,8 +328,42 @@ const World = struct {
     }
 };
 
+fn checkPath(path: []const u8, arg: u32) !void {
+    if (path.len == 0 or path.len > 4096 or std.mem.indexOfScalar(u8, path, 0) != null) return exception.argumentValueError(arg, "must be a directory path of at most 4096 bytes", .{});
+}
+
+const Conversion = fn ([*]const u8, usize, [*]const u8, usize, *native.Report) callconv(.c) native.Status;
+
+/// Conversions can take minutes and touch only the paths given, so they run without a handle.
+fn convert(comptime function: Conversion, first: []const u8, second: []const u8, comptime what: [:0]const u8) !*Array {
+    try checkPath(first, 1);
+    try checkPath(second, 2);
+    var report: native.Report = undefined;
+    const status = function(first.ptr, first.len, second.ptr, second.len, &report);
+    if (status != .ok) return failReport(status, what, &report);
+    return reportArray(&report);
+}
+
+fn failReport(status: native.Status, comptime what: [:0]const u8, report: *const native.Report) exception.Error {
+    const code: c_int = @backingInt(status);
+    const message: [*:0]const u8 = @ptrCast(&report.message);
+    if (message[0] == 0) return fail(status, what);
+    return exception.throwExceptionEx(root.ExceptionClass.entry, code, what ++ ": %s (%s)", .{ message, native.zg_status_message(code) });
+}
+
+fn reportArray(report: *const native.Report) !*Array {
+    const names = .{ "chunk_records", "other_records", "bytes", "files", "regions", "problems" };
+    const array = Array.init(names.len);
+    inline for (names) |name| {
+        var value: c.zval = undefined;
+        Zval.raw.set(&value, .int, std.math.cast(i64, @field(report, name)) orelse std.math.maxInt(i64));
+        _ = array.update(name, &value);
+    }
+    return array;
+}
+
 fn oom() exception.Error {
-    return exception.throwException(root.ExceptionClass.entry, "out of memory", @intFromEnum(native.Status.out_of_memory));
+    return exception.throwException(root.ExceptionClass.entry, "out of memory", @backingInt(native.Status.out_of_memory));
 }
 
 fn int32(value: i64, arg: u32) !i32 {
@@ -366,12 +424,12 @@ fn recordArray(buffer: []const u8, records: []const native.ChunkRecord) !*Array 
     errdefer array.release();
     for (records) |record| {
         if (record.component > 0xff or record.offset > buffer.len or record.length > buffer.len - record.offset) {
-            return exception.throwException(root.ExceptionClass.entry, "library returned an invalid chunk record", @intFromEnum(native.Status.corruption));
+            return exception.throwException(root.ExceptionClass.entry, "library returned an invalid chunk record", @backingInt(native.Status.corruption));
         }
         var suffix: [2]u8 = .{ @intCast(record.component), 0 };
         var len: usize = 1;
         if (record.component == native.Component.subchunk) {
-            const y = std.math.cast(i8, record.subchunk_y) orelse return exception.throwException(root.ExceptionClass.entry, "library returned an invalid subchunk Y", @intFromEnum(native.Status.corruption));
+            const y = std.math.cast(i8, record.subchunk_y) orelse return exception.throwException(root.ExceptionClass.entry, "library returned an invalid subchunk Y", @backingInt(native.Status.corruption));
             suffix[1] = @bitCast(y);
             len = 2;
         }

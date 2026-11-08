@@ -1,4 +1,4 @@
-//! Declarations for ZigriteDB's C ABI 3 (`zigritedb.h`), which is linked in statically.
+//! Declarations for ZigriteDB's C ABI 3 (`zigritedb.h`) as of ZigriteDB 1.3.0, which is linked in statically.
 const std = @import("std");
 
 pub const abi_version: u32 = 3;
@@ -25,6 +25,7 @@ pub const Status = enum(c_int) {
     no_space,
     read_only,
     needs_migration,
+    mismatch,
     _,
 };
 
@@ -105,7 +106,18 @@ pub const Stats = extern struct {
     unchanged_write_skips: u64,
 };
 
+pub const Report = extern struct {
+    chunk_records: u64,
+    other_records: u64,
+    bytes: u64,
+    files: u64,
+    regions: u64,
+    problems: u64,
+    message: [256]u8,
+};
+
 comptime {
+    std.debug.assert(@sizeOf(Report) == 304);
     // the layouts the library asserts on its side
     std.debug.assert(@sizeOf(Options) == 72);
     std.debug.assert(@offsetOf(Options, "compression_threshold") == 36);
@@ -133,3 +145,8 @@ pub extern fn zg_flush(handle: *Handle) Status;
 pub extern fn zg_list_regions(handle: *Handle, out: ?[*]Region, capacity: usize, count: *usize) Status;
 pub extern fn zg_list_keys(handle: *Handle, dimension: i32, region_x: i32, region_z: i32, component: u32, out: ?[*]Key, capacity: usize, count: *usize) Status;
 pub extern fn zg_stats_get(handle: *Handle, out: *Stats) Status;
+pub extern fn zg_import(source: [*]const u8, source_len: usize, destination: [*]const u8, destination_len: usize, out: *Report) Status;
+pub extern fn zg_export(source: [*]const u8, source_len: usize, destination: [*]const u8, destination_len: usize, out: *Report) Status;
+pub extern fn zg_verify_bedrock(world: [*]const u8, world_len: usize, bedrock: [*]const u8, bedrock_len: usize, out: *Report) Status;
+pub extern fn zg_verify(world: [*]const u8, world_len: usize, out: *Report) Status;
+pub extern fn zg_migrate(source: [*]const u8, source_len: usize, destination: [*]const u8, destination_len: usize, out: *Report) Status;
