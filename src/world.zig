@@ -22,6 +22,8 @@ const record_overhead = 16;
 /// Most chunks fit, and anything bigger is retried with the size the library reports.
 const initial_buffer = 256 * 1024;
 const initial_records = 64;
+/// A rare huge chunk shouldn't keep its buffer for as long as the world stays open.
+const max_retained_buffer = 1024 * 1024;
 
 fn fail(status: native.Status, comptime what: [:0]const u8) exception.Error {
     const code: c_int = @backingInt(status);
@@ -101,6 +103,7 @@ const World = struct {
         const x = try int32(chunk_x, 2);
         const z = try int32(chunk_z, 3);
         if (self.buffer.len == 0) try self.grow(initial_buffer, initial_records);
+        defer if (self.buffer.len > max_retained_buffer) self.release();
 
         var attempts: usize = 0;
         while (true) : (attempts += 1) {
@@ -122,9 +125,10 @@ const World = struct {
 
     fn grow(self: *World, bytes: usize, records: usize) !void {
         if (bytes > self.buffer.len) {
-            const fresh = gpa.alloc(u8, bytes) catch return exception.throwException(root.ExceptionClass.entry, "out of memory", @backingInt(native.Status.out_of_memory));
+            // Nothing in the old buffer is needed, so it goes first and the two never exist together.
             gpa.free(self.buffer);
-            self.buffer = fresh;
+            self.buffer = &.{};
+            self.buffer = gpa.alloc(u8, bytes) catch return oom();
         }
         if (records > self.records.len) {
             const fresh = gpa.alloc(native.ChunkRecord, records) catch return exception.throwException(root.ExceptionClass.entry, "out of memory", @backingInt(native.Status.out_of_memory));
