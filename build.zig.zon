@@ -9,8 +9,8 @@
             .hash = "phpz-0.0.0-D3BhOA2wFQDjzXMVqZDonjuSSt89tqNJiLJKz2UIugAr",
         },
         .zigritedb = .{
-            .url = "git+https://github.com/TrixNEW/ZigriteDB#3b83dbd56215d7064f6fc1df176317f1479803ea",
-            .hash = "zigritedb-1.4.0-r-G0MKsuBgDLJTEGRc9w52axhikOs8IhvqiuDHfnoRSa",
+            .url = "git+https://github.com/TrixNEW/ZigriteDB#5bc071ae77aed2223abaaeb8fb8430c05c6d9f0e",
+            .hash = "zigritedb-1.4.0-r-G0MHY1BgB6Mk2dpeh35CTt_bnML-gFDG8CzxmYdGRq",
         },
     },
     .paths = .{ "build.zig", "build.zig.zon", "LICENSE", "zigritedb.stub.php", "zigritedb_arginfo.h", "zigritedb.h", "src", "tests", "README.md" },
