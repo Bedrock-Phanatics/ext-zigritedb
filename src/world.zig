@@ -202,6 +202,11 @@ const World = struct {
             } else i += 1;
         }
 
+        // Checked before anything is written, so a chunk is never left without its last batch for this reason.
+        var tail: usize = frame_header;
+        for (operations[last..]) |operation| tail += record_overhead + operation.value_len;
+        if (tail > self.batch_limit) return exception.argumentValueError(4, "has deletes and version records too big for one batch", .{});
+
         var start: usize = 0;
         while (start < last) {
             var end = start;
@@ -215,7 +220,6 @@ const World = struct {
             if (status != .ok) return fail(status, "cannot write part of a chunk too big for one batch");
             start = end;
         }
-        // Deletes carry no value and version records one byte, so these always fit one batch.
         if (last == operations.len) return;
         const status = native.zg_write(handle, 0, operations[last..].ptr, operations.len - last);
         if (status != .ok) return fail(status, "cannot write the last part of a chunk too big for one batch");
