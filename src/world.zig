@@ -149,8 +149,9 @@ const World = struct {
         // every suffix names a different record, so a chunk can't have more than this many
         if (total > 2 * 256) return exception.argumentValueError(4, "has too many records", .{});
 
-        const operations = gpa.alloc(native.Operation, total) catch return oom();
-        defer gpa.free(operations);
+        var inline_operations: [64]native.Operation = undefined;
+        const operations = if (total <= inline_operations.len) inline_operations[0..total] else gpa.alloc(native.Operation, total) catch return oom();
+        defer if (total > inline_operations.len) gpa.free(operations);
 
         var bytes: usize = frame_header;
         var used: usize = 0;
