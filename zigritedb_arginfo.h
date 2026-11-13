@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: c35cd753058144270a00d7eaa08f863935d279df */
+ * Stub hash: d916518d96d537ac4c7b3a460144e63e320a4b49 */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_class_Zigrite_World___construct, 0, 0, 1)
 	ZEND_ARG_TYPE_INFO(0, path, IS_STRING, 0)

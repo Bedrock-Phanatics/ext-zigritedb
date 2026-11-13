@@ -17,7 +17,16 @@ $world->close();
 $world = new Zigrite\World($dir);
 $read = $world->getChunk(0, 5, 5);
 var_dump(count($read), $read === $records || (ksort($read, SORT_STRING) && ksort($records, SORT_STRING) && $read === $records));
-// a small chunk after the big one reuses the grown buffer
+unset($read, $records);
+// a split write applies its deletes and its version record too
+$update =["2" => null, "," => "\x29"];
+for($y = -4; $y < 0; ++$y){
+	$update["/" . chr($y & 0xff)] = random_bytes(700 * 1024);
+}
+$world->writeChunk(0, 5, 5, $update);
+$after = $world->getChunk(0, 5, 5);
+var_dump(isset($after[2]), $after[","] === "\x29", $after["/\xfc"] === $update["/\xfc"], count($after));
+// a small chunk after the big one gets a fresh buffer
 $world->writeChunk(0, 6, 5, ["," => "\x28"]);
 var_dump($world->getChunk(0, 6, 5));
 $world->close();
@@ -29,6 +38,10 @@ rmdir($dir);
 --EXPECT--
 int(26)
 bool(true)
+bool(false)
+bool(true)
+bool(true)
+int(25)
 array(1) {
   [","]=>
   string(1) "("

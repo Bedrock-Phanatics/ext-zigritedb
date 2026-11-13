@@ -60,7 +60,10 @@ namespace Zigrite {
         /** Records keyed by Bedrock LevelDB chunk key suffix: the record tag, plus the Y byte for subchunks. */
         public function getChunk(int $dimension, int $chunkX, int $chunkZ): ?array {}
 
-        /** Writes every string and deletes every null in $records atomically. */
+        /**
+         * Writes every string and deletes every null in $records. The write is atomic while the chunk fits
+         * batch_buffer_size, which can be raised to 64 MiB; a bigger chunk goes in several writes a crash can split.
+         */
         public function writeChunk(int $dimension, int $chunkX, int $chunkZ, array $records): void {}
 
         public function auxGet(string $key): ?string {}

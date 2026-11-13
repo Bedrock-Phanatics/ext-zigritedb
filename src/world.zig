@@ -138,7 +138,7 @@ const World = struct {
     }
 
     /// Puts each string and deletes each null in `$records`, keyed by LevelDB suffix, as one atomic batch. A chunk too
-    /// big for the batch buffer is written in several batches instead, with its version records last.
+    /// big for the batch buffer is written in several batches instead, which is not atomic: see `writeSplit`.
     pub fn writeChunk(self: *World, dimension: i64, chunk_x: i64, chunk_z: i64, records: *Array) !void {
         const handle = try self.get();
         const dim = try int32(dimension, 1);
@@ -187,32 +187,38 @@ const World = struct {
         try self.writeSplit(handle, operations);
     }
 
-    /// Writes batches that each fit the batch buffer. The version records go last, so a chunk cut short by a crash
-    /// still reads as its previous version wherever its records weren't replaced yet.
+    /// Writes batches that each fit the batch buffer. Each batch is atomic, the chunk as a whole is not: a crash or a
+    /// failed batch leaves the earlier batches in place, so the chunk then mixes new and old records. The version
+    /// records and every delete go together in the last batch: a chunk that was never stored stays unreadable until
+    /// all of it is there, and no record is removed before the ones replacing it have landed.
     fn writeSplit(self: *World, handle: *native.Handle, operations: []native.Operation) !void {
         var last: usize = operations.len;
         var i: usize = 0;
         while (i < last) {
             const component = operations[i].key.component;
-            if (component == native.Component.version or component == native.Component.legacy_version) {
+            if (operations[i].remove == 1 or component == native.Component.version or component == native.Component.legacy_version) {
                 last -= 1;
                 std.mem.swap(native.Operation, &operations[i], &operations[last]);
             } else i += 1;
         }
 
         var start: usize = 0;
-        while (start < operations.len) {
+        while (start < last) {
             var end = start;
             var bytes: usize = frame_header;
-            while (end < operations.len) : (end += 1) {
+            while (end < last) : (end += 1) {
                 const size = record_overhead + operations[end].value_len;
                 if (end > start and bytes + size > self.batch_limit) break;
                 bytes += size;
             }
             const status = native.zg_write(handle, 0, operations[start..].ptr, end - start);
-            if (status != .ok) return fail(status, "cannot write chunk");
+            if (status != .ok) return fail(status, "cannot write part of a chunk too big for one batch");
             start = end;
         }
+        // Deletes carry no value and version records one byte, so these always fit one batch.
+        if (last == operations.len) return;
+        const status = native.zg_write(handle, 0, operations[last..].ptr, operations.len - last);
+        if (status != .ok) return fail(status, "cannot write the last part of a chunk too big for one batch");
     }
 
     pub fn auxGet(self: *World, key: []const u8) !?*zend.String {

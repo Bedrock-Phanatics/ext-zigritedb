@@ -20,10 +20,18 @@ $world->flush();                                   // fsync, survives power loss
 $world->close();
 ```
 
-`writeChunk()` is one atomic batch. A chunk too big for `batch_buffer_size` is written in several batches, version
-records last. Writes are buffered by default: they reach the OS before the call returns, so they survive the process
-crashing, and `flush()` or `close()` makes them survive power loss too. A world freed without `close()` is closed by its
-destructor.
+`writeChunk()` is one atomic batch while the chunk fits `batch_buffer_size` (1 MiB by default, 64 MiB at most; a
+record is limited to 16 MiB either way). A bigger chunk is written in several batches, version records last. Each of
+those is atomic but the chunk is not: a crash or a failed batch in between leaves a mix of new and old records, and the
+exception from a failed batch is the only notice. Raise `batch_buffer_size` to keep whole chunks atomic; it only limits
+writes and costs no memory.
+
+Writes are buffered by default: they reach the OS before the call returns, so they survive the process crashing, and
+`flush()` or `close()` makes them survive power loss too. Call `flush()` once after a save pass rather than per chunk.
+A world freed without `close()` is closed by its destructor. `close()` releases the world even when it throws.
+
+After a crash, a region whose last write was cut short reopens without it; nothing older is touched. A region that
+lost data it had already synced throws code 8 instead and stays as it is for `zigrite recover`.
 
 Worlds convert with ZigriteDB's native converter, which keeps every LevelDB record and world file as is and compares
 the result with the source before it appears at the destination. Each call blocks until done, so run it off the main
